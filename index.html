@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stocky — Gestion de quincaillerie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E7EBEE;
+  --panel:#FFFFFF;
+  --panel-2:#F1F3F5;
+  --ink:#1D2229;
+  --ink-soft:#5B6472;
+  --ink-faint:#8A93A0;
+  --sidebar:#1A1F27;
+  --sidebar-2:#232A34;
+  --sidebar-text:#98A2B0;
+  --sidebar-text-active:#F3F4F2;
+  --accent:#D9531E;
+  --accent-dark:#B84415;
+  --accent-soft:#FBE4D9;
+  --info:#375575;
+  --info-soft:#DEE7EF;
+  --success:#3F7D53;
+  --success-soft:#E1EEE4;
+  --alert:#B9821C;
+  --alert-soft:#F5E9D3;
+  --danger:#B3392C;
+  --danger-soft:#F6E1DE;
+  --border:#D6DBE0;
+  --border-soft:#E7EAED;
+  --radius:3px;
+  --shadow:0 1px 2px rgba(20,24,30,0.06), 0 6px 20px rgba(20,24,30,0.06);
+  --mono:'IBM Plex Mono', ui-monospace, monospace;
+  --display:'Oswald', sans-serif;
+  --body:'Inter', system-ui, sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family:var(--body);
+  background:var(--bg);
+  color:var(--ink);
+  font-size:14px;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;}
+input,select,textarea{font-family:inherit;font-size:14px;}
+::selection{background:var(--accent-soft);}
+
+/* ---------- Layout ---------- */
+#app{display:flex;min-height:100vh;}
+
+.sidebar{
+  width:220px;
+  flex-shrink:0;
+  background:var(--sidebar);
+  color:var(--sidebar-text);
+  display:flex;
+  flex-direction:column;
+  position:sticky;
+  top:0;
+  height:100vh;
+}
+.sidebar-brand{
+  padding:22px 20px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.sidebar-brand .mark{
+  font-family:var(--display);
+  font-weight:700;
+  font-size:20px;
+  letter-spacing:0.03em;
+  color:#fff;
+  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.sidebar-brand .mark svg{flex-shrink:0;}
+.sidebar-brand .sub{
+  font-size:10.5px;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--sidebar-text);
+  margin-top:4px;
+}
+.sidebar-nav{
+  flex:1;
+  overflow-y:auto;
+  padding:14px 10px;
+}
+.nav-group-label{
+  font-size:10px;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:#5C6472;
+  padding:14px 10px 6px;
+  font-weight:600;
+}
+.nav-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  padding:9px 10px;
+  border-radius:var(--radius);
+  border:none;
+  background:transparent;
+  color:var(--sidebar-text);
+  cursor:pointer;
+  font-size:13px;
+  font-weight:500;
+  text-align:left;
+  margin-bottom:2px;
+  transition:background .12s ease, color .12s ease;
+}
+.nav-item svg{flex-shrink:0;opacity:.85;}
+.nav-item:hover{background:var(--sidebar-2);color:#E4E7EB;}
+.nav-item.active{background:var(--accent);color:#fff;}
+.nav-item.active svg{opacity:1;}
+.nav-item .count{
+  margin-left:auto;
+  font-family:var(--mono);
+  font-size:10.5px;
+  color:#7C8494;
+  background:rgba(255,255,255,0.06);
+  padding:1px 6px;
+  border-radius:10px;
+}
+.nav-item.active .count{color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.18);}
+
+.sidebar-foot{
+  padding:12px 16px 16px;
+  border-top:1px solid rgba(255,255,255,0.08);
+  font-size:10.5px;
+  color:#5C6472;
+  line-height:1.5;
+}
+
+.main{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+}
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:18px 28px;
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  position:sticky;
+  top:0;
+  z-index:20;
+}
+.topbar-title{
+  font-family:var(--display);
+  font-size:22px;
+  font-weight:600;
+  letter-spacing:0.01em;
+  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.topbar-sub{
+  font-size:12.5px;
+  color:var(--ink-soft);
+  margin-top:2px;
+}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+
+.content{
+  padding:24px 28px 60px;
+  flex:1;
+}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:9px 14px;
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:var(--ink);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:background .12s, border-color .12s, color .12s;
+  white-space:nowrap;
+}
+.btn:hover{border-color:var(--ink-faint);}
+.btn-primary{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);}
+.btn-ghost{border-color:transparent;background:transparent;}
+.btn-ghost:hover{background:var(--panel-2);}
+.btn-danger{color:var(--danger);}
+.btn-danger:hover{background:var(--danger-soft);border-color:var(--danger);}
+.btn-sm{padding:5px 9px;font-size:12px;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.icon-btn{
+  width:30px;height:30px;padding:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  border-radius:var(--radius);border:1px solid var(--border);background:var(--panel);cursor:pointer;color:var(--ink-soft);
+}
+.icon-btn:hover{border-color:var(--ink-faint);color:var(--ink);}
+
+/* ---------- Cards / KPI ---------- */
+.grid{display:grid;gap:14px;}
+.kpi-grid{grid-template-columns:repeat(auto-fit, minmax(190px,1fr));margin-bottom:18px;}
+.kpi-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px 16px 14px;
+  position:relative;
+  overflow:hidden;
+}
+.kpi-card .kpi-label{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:8px;
+}
+.kpi-card .kpi-value{
+  font-family:var(--display);
+  font-size:26px;
+  font-weight:600;
+  color:var(--ink);
+  line-height:1.1;
+}
+.kpi-card .kpi-value .unit{font-size:13px;color:var(--ink-soft);font-family:var(--body);font-weight:500;margin-left:3px;}
+.kpi-card .kpi-note{font-size:11.5px;color:var(--ink-faint);margin-top:6px;}
+.kpi-card.accent{border-left:3px solid var(--accent);}
+.kpi-card.warn{border-left:3px solid var(--alert);}
+.kpi-card.ok{border-left:3px solid var(--success);}
+.kpi-card.info{border-left:3px solid var(--info);}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px 18px 16px;
+}
+.panel + .panel{margin-top:14px;}
+.panel-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;
+}
+.panel-head h3{
+  font-family:var(--display);
+  font-size:14px;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  margin:0;
+  font-weight:600;
+}
+.panel-head .hint{font-size:11.5px;color:var(--ink-faint);}
+
+.two-col{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;align-items:start;}
+@media (max-width:980px){.two-col{grid-template-columns:1fr;}}
+
+/* ---------- Tables ---------- */
+.table-wrap{overflow-x:auto;}
+table.data{width:100%;border-collapse:collapse;font-size:13px;}
+table.data thead th{
+  text-align:left;
+  font-size:10.5px;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  font-weight:600;
+  padding:8px 10px;
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+table.data tbody td{
+  padding:9px 10px;
+  border-bottom:1px solid var(--border-soft);
+  vertical-align:middle;
+}
+table.data tbody tr:hover{background:var(--panel-2);}
+table.data .num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;}
+table.data .mono{font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);}
+table.data .row-actions{display:flex;gap:6px;justify-content:flex-end;}
+.table-toolbar{
+  display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;
+}
+.search-input{
+  flex:1;min-width:180px;
+  padding:8px 10px;
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  background:var(--panel-2);
+  font-size:13px;
+}
+.search-input:focus{outline:none;border-color:var(--accent);background:var(--panel);}
+.empty-state{
+  padding:40px 20px;text-align:center;color:var(--ink-faint);font-size:13px;
+}
+.empty-state .big{font-family:var(--display);font-size:15px;color:var(--ink-soft);margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em;}
+
+/* ---------- Tags / badges ---------- */
+.tag{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:20px;
+  font-size:11px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.02em;
+}
+.tag.ok{background:var(--success-soft);color:var(--success);}
+.tag.warn{background:var(--alert-soft);color:var(--alert);}
+.tag.danger{background:var(--danger-soft);color:var(--danger);}
+.tag.info{background:var(--info-soft);color:var(--info);}
+.tag.neutral{background:var(--panel-2);color:var(--ink-soft);}
+
+/* ---------- Stock gauge (signature element) ---------- */
+.gauge{display:flex;align-items:center;gap:8px;min-width:120px;}
+.gauge-track{
+  flex:1;height:6px;background:var(--border-soft);border-radius:4px;overflow:hidden;position:relative;
+}
+.gauge-fill{height:100%;border-radius:4px;}
+.gauge-fill.ok{background:var(--success);}
+.gauge-fill.warn{background:var(--alert);}
+.gauge-fill.danger{background:var(--danger);}
+.gauge-text{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);white-space:nowrap;}
+
+/* ---------- Forms ---------- */
+.field{margin-bottom:13px;}
+.field label{
+  display:block;font-size:11.5px;font-weight:600;color:var(--ink-soft);
+  text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;
+}
+.field input, .field select, .field textarea{
+  width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--panel);color:var(--ink);
+}
+.field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+.field textarea{resize:vertical;min-height:60px;}
+.field .req{color:var(--accent);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field-row.three{grid-template-columns:1fr 1fr 1fr;}
+.checkbox-field{display:flex;align-items:center;gap:8px;}
+.checkbox-field input{width:auto;}
+
+/* ---------- Modal ---------- */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(20,24,30,0.5);
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:40px 20px;overflow-y:auto;z-index:100;
+}
+.modal{
+  background:var(--panel);border-radius:6px;width:100%;max-width:560px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.25);
+  animation:modalIn .14s ease;
+}
+.modal.wide{max-width:820px;}
+@keyframes modalIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--border);
+}
+.modal-head h3{margin:0;font-family:var(--display);font-size:16px;text-transform:uppercase;letter-spacing:.03em;}
+.modal-body{padding:20px;max-height:70vh;overflow-y:auto;}
+.modal-foot{
+  display:flex;justify-content:flex-end;gap:8px;
+  padding:14px 20px;border-top:1px solid var(--border);
+}
+
+/* ---------- Line items (purchases/sales) ---------- */
+.line-items{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
+.line-items table{width:100%;border-collapse:collapse;}
+.line-items th{
+  background:var(--panel-2);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--ink-soft);padding:7px 8px;text-align:left;font-weight:600;
+}
+.line-items td{padding:5px 6px;border-top:1px solid var(--border-soft);}
+.line-items input, .line-items select{padding:6px 7px;font-size:12.5px;}
+.line-items .total-cell{font-family:var(--mono);text-align:right;padding-right:10px;white-space:nowrap;}
+.line-items-foot{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 12px;background:var(--panel-2);border-top:1px solid var(--border);
+}
+.grand-total{font-family:var(--display);font-size:17px;font-weight:600;}
+.grand-total .mono{font-family:var(--mono);}
+
+/* ---------- Charts (custom SVG) ---------- */
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:10px;}
+.chart-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;}
+.chart-bar{width:100%;max-width:26px;border-radius:2px 2px 0 0;background:var(--accent);position:relative;min-height:2px;}
+.chart-bar-label{font-size:9.5px;color:var(--ink-faint);text-align:center;white-space:nowrap;}
+.hbar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.hbar-label{width:130px;font-size:12px;color:var(--ink-soft);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hbar-track{flex:1;background:var(--panel-2);border-radius:3px;height:14px;overflow:hidden;}
+.hbar-fill{height:100%;background:var(--info);border-radius:3px;}
+.hbar-value{width:74px;text-align:right;font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);flex-shrink:0;}
+
+/* ---------- Toast ---------- */
+#toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:#fff;padding:10px 18px;border-radius:5px;
+  font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,0.25);
+  z-index:200;opacity:0;pointer-events:none;transition:opacity .18s, transform .18s;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+
+/* ---------- Misc ---------- */
+.pill-tabs{display:flex;gap:4px;background:var(--panel-2);padding:3px;border-radius:6px;width:fit-content;margin-bottom:14px;}
+.pill-tab{padding:6px 14px;border-radius:4px;border:none;background:transparent;font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;}
+.pill-tab.active{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,0.08);}
+.detail-link{color:var(--info);cursor:pointer;text-decoration:none;font-weight:600;}
+.detail-link:hover{text-decoration:underline;}
+.section-note{
+  font-size:12px;color:var(--ink-soft);background:var(--info-soft);border-left:3px solid var(--info);
+  padding:9px 12px;border-radius:0 3px 3px 0;margin-bottom:14px;
+}
+.skeleton{color:var(--ink-faint);padding:30px;text-align:center;font-size:13px;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:#C7CCD2;border-radius:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+@media (max-width:760px){
+  .sidebar{width:64px;}
+  .sidebar-brand .sub, .nav-item span.label, .sidebar-foot, .nav-group-label{display:none;}
+  .nav-item{justify-content:center;}
+  .nav-item .count{display:none;}
+  .content{padding:16px;}
+  .topbar{padding:14px 16px;}
+  .field-row, .field-row.three{grid-template-columns:1fr;}
+  .two-col{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 9L12 4L21 9V19C21 19.5523 20.5523 20 20 20H4C3.44772 20 3 19.5523 3 19V9Z" stroke="#D9531E" stroke-width="2" stroke-linejoin="round"/><path d="M9 20V13H15V20" stroke="#D9531E" stroke-width="2" stroke-linejoin="round"/></svg>
+        Stocky
+      </div>
+      <div class="sub">Registre de quincaillerie</div>
+    </div>
+    <div class="sidebar-nav" id="sidebarNav"></div>
+    <div class="sidebar-foot">Connecté à votre base de données en ligne.</div>
+  </nav>
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbarTitle">Tableau de bord</div>
+        <div class="topbar-sub" id="topbarSub"></div>
+      </div>
+      <div class="topbar-actions" id="topbarActions"></div>
+    </div>
+    <div class="content" id="content">
+      <div class="skeleton">Chargement du registre…</div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="modalRoot"></div>
+
+<script>
+/* ===================== Stocky — coeur applicatif ===================== */
+'use strict';
+
+const ICONS = {
+  dashboard: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="9" rx="1" stroke="currentColor" stroke-width="2"/><rect x="13" y="3" width="8" height="5" rx="1" stroke="currentColor" stroke-width="2"/><rect x="13" y="12" width="8" height="9" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="16" width="8" height="5" rx="1" stroke="currentColor" stroke-width="2"/></svg>',
+  products: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 8L12 3L3 8L12 13L21 8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 8V16L12 21L21 16V8" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 13V21" stroke="currentColor" stroke-width="2"/></svg>',
+  categories: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/></svg>',
+  brands: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L15 9L22 10L17 15L18.5 22L12 18.5L5.5 22L7 15L2 10L9 9L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  units: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 7H20" stroke="currentColor" stroke-width="2"/><path d="M4 7L6 4M4 7L6 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 7L18 4M20 7L18 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 15H18V19H6V15Z" stroke="currentColor" stroke-width="2"/></svg>',
+  warehouses: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 9L12 4L21 9V19C21 19.5523 20.5523 20 20 20H4C3.44772 20 3 19.5523 3 19V9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 20V13H15V20" stroke="currentColor" stroke-width="2"/></svg>',
+  clients: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M4 21C4 16.5817 7.58172 13 12 13C16.4183 13 20 16.5817 20 21" stroke="currentColor" stroke-width="2"/></svg>',
+  providers: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="1" stroke="currentColor" stroke-width="2"/><path d="M8 7V5C8 3.89543 8.89543 3 10 3H14C15.1046 3 16 3.89543 16 5V7" stroke="currentColor" stroke-width="2"/></svg>',
+  purchases: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6H21L19 15H7L5 3H2" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="9" cy="20" r="1.4" stroke="currentColor" stroke-width="1.6"/><circle cx="17" cy="20" r="1.4" stroke="currentColor" stroke-width="1.6"/></svg>',
+  sales: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 3H5L7.5 15.5C7.7 16.4 8.5 17 9.4 17H18C18.9 17 19.6 16.4 19.8 15.5L21.3 8H6.2" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="9.5" cy="20.5" r="1.4" stroke="currentColor" stroke-width="1.6"/><circle cx="17.5" cy="20.5" r="1.4" stroke="currentColor" stroke-width="1.6"/></svg>',
+  employees: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/><path d="M2 20C2 16.134 5.13401 13 9 13C11.1 13 13 13.9 14.2 15.3" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="8" r="2.3" stroke="currentColor" stroke-width="1.7"/><path d="M14.5 20C14.7 16.7 17 14.3 20 14.3C21 14.3 21.8 14.5 22.4 14.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  plus: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+  edit: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 20H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 3.5C17.3284 2.67157 18.6716 2.67157 19.5 3.5C20.3284 4.32843 20.3284 5.67157 19.5 6.5L7 19L3 20L4 16L16.5 3.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  trash: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 7V4H15V7" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M6 7L7 21H17L18 7" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  eye: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>',
+  close: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 5L19 19M19 5L5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  search: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  reset: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 4V9H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 15C6 19 10.2 21.5 14.6 20.6C19 19.7 21.9 15.5 21 11.1C20.1 6.7 15.9 3.8 11.5 4.7C8.6 5.3 6.3 7.3 5.2 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+};
+
+const NAV = [
+  {group:'Aperçu', items:[
+    {id:'dashboard', label:'Tableau de bord', icon:'dashboard'}
+  ]},
+  {group:'Catalogue', items:[
+    {id:'products', label:'Produits', icon:'products'},
+    {id:'categories', label:'Catégories', icon:'categories'},
+    {id:'brands', label:'Marques', icon:'brands'},
+    {id:'units', label:'Unités', icon:'units'},
+    {id:'warehouses', label:'Entrepôts', icon:'warehouses'}
+  ]},
+  {group:'Transactions', items:[
+    {id:'purchases', label:'Achats', icon:'purchases'},
+    {id:'sales', label:'Ventes', icon:'sales'}
+  ]},
+  {group:'Annuaire', items:[
+    {id:'clients', label:'Clients', icon:'clients'},
+    {id:'providers', label:'Fournisseurs', icon:'providers'},
+    {id:'employees', label:'Employés', icon:'employees'}
+  ]}
+];
+
+let DB = null;
+let currentSection = 'dashboard';
+let saveTimer = null;
+let saveInFlight = false;
+let savePending = false;
+
+/* ---------- Auth ---------- */
+function getStoredPassword(){
+  return localStorage.getItem('stocky_pw') || '';
+}
+function setStoredPassword(pw){
+  localStorage.setItem('stocky_pw', pw);
+}
+function clearStoredPassword(){
+  localStorage.removeItem('stocky_pw');
+}
+async function apiFetch(url, options){
+  options = options || {};
+  const headers = Object.assign({'Content-Type':'application/json'}, options.headers||{});
+  const pw = getStoredPassword();
+  if(pw) headers['x-app-password'] = pw;
+  const res = await fetch(url, Object.assign({}, options, {headers}));
+  return res;
+}
+
+async function tryLogin(password){
+  const res = await fetch('/api/login', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({password})
+  });
+  return res.ok;
+}
+
+function showLoginScreen(errorMsg){
+  document.getElementById('app').style.display = 'none';
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-backdrop" style="align-items:center;">
+      <div class="modal" style="max-width:380px;">
+        <div class="modal-head"><h3>Connexion à Stocky</h3></div>
+        <form id="loginForm">
+          <div class="modal-body">
+            <div class="field">
+              <label>Mot de passe</label>
+              <input type="password" name="password" autofocus required>
+            </div>
+            ${errorMsg ? `<div class="section-note" style="background:var(--danger-soft);border-color:var(--danger);color:var(--danger);">${esc(errorMsg)}</div>` : ''}
+          </div>
+          <div class="modal-foot">
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Se connecter</button>
+          </div>
+        </form>
+      </div>
+    </div>`;
+  document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const pw = e.target.elements.password.value;
+    const ok = await tryLogin(pw);
+    if(ok){
+      setStoredPassword(pw);
+      root.innerHTML = '';
+      document.getElementById('app').style.display = '';
+      boot();
+    } else {
+      showLoginScreen('Mot de passe incorrect');
+    }
+  });
+}
+
+function uid(collection){
+  let max = 0;
+  for(const row of collection){ if(row.id > max) max = row.id; }
+  return max + 1;
+}
+
+function fmtMoney(n){
+  n = Number(n)||0;
+  return Math.round(n).toLocaleString('fr-FR') + ' FCFA';
+}
+function fmtNum(n, decimals){
+  n = Number(n)||0;
+  if(decimals===undefined) decimals = (n % 1 !== 0) ? 2 : 0;
+  return n.toLocaleString('fr-FR', {minimumFractionDigits:0, maximumFractionDigits:decimals});
+}
+function fmtDate(d){
+  if(!d) return '—';
+  const parts = String(d).split('-');
+  if(parts.length===3) return parts[2]+'/'+parts[1]+'/'+parts[0];
+  return d;
+}
+function esc(s){
+  if(s===null||s===undefined) return '';
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+async function loadDB(){
+  const res = await apiFetch('/api/state');
+  if(res.status===401){
+    showLoginScreen();
+    throw new Error('auth-required');
+  }
+  if(!res.ok){
+    throw new Error('Impossible de charger les données du serveur');
+  }
+  const json = await res.json();
+  DB = json.data;
+}
+
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveDB, 500);
+}
+async function saveDB(){
+  if(saveInFlight){ savePending = true; return; }
+  saveInFlight = true;
+  try{
+    const res = await apiFetch('/api/state', {method:'PUT', body: JSON.stringify({data: DB})});
+    if(res.status===401){
+      clearStoredPassword();
+      showLoginScreen('Session expirée — reconnectez-vous');
+      return;
+    }
+    if(!res.ok){
+      toast('Erreur de sauvegarde — vérifiez votre connexion internet');
+    }
+  }catch(e){
+    console.error('Erreur de sauvegarde', e);
+    toast('Erreur de sauvegarde — vérifiez votre connexion internet');
+  }finally{
+    saveInFlight = false;
+    if(savePending){ savePending = false; saveDB(); }
+  }
+}
+
+/* ---------- Lookups ---------- */
+function findById(collection, id){
+  if(id===null||id===undefined||id==='') return null;
+  return collection.find(r=>r.id===Number(id)) || null;
+}
+function nameOf(collection, id, field){
+  field = field || 'name';
+  const row = findById(collection, id);
+  return row ? row[field] : '—';
+}
+
+/* ---------- Stock computation ---------- */
+function stockFor(productId, warehouseId){
+  let qty = 0;
+  for(const p of DB.purchases){
+    if(warehouseId && p.warehouseId !== warehouseId) continue;
+    for(const it of p.items){ if(it.productId === productId) qty += it.quantity; }
+  }
+  for(const s of DB.sales){
+    if(warehouseId && s.warehouseId !== warehouseId) continue;
+    for(const it of s.items){ if(it.productId === productId) qty -= it.quantity; }
+  }
+  return qty;
+}
+function totalStockValue(){
+  let val = 0;
+  for(const prod of DB.products){
+    val += stockFor(prod.id) * prod.cost;
+  }
+  return val;
+}
+function gaugeClass(stock, alert){
+  if(alert>0 && stock<=alert) return stock<=0 ? 'danger' : 'warn';
+  if(stock<=0) return 'danger';
+  return 'ok';
+}
+function gaugeHtml(stock, alert){
+  const cls = gaugeClass(stock, alert);
+  const max = Math.max(alert*3, stock, 10);
+  const pct = Math.max(4, Math.min(100, (stock/max)*100));
+  return `<div class="gauge">
+    <div class="gauge-track"><div class="gauge-fill ${cls}" style="width:${pct}%"></div></div>
+    <div class="gauge-text">${fmtNum(stock)}</div>
+  </div>`;
+}
+
+/* ---------- Router ---------- */
+function renderSidebar(){
+  const nav = document.getElementById('sidebarNav');
+  let html = '';
+  for(const group of NAV){
+    html += `<div class="nav-group-label">${group.group}</div>`;
+    for(const item of group.items){
+      const count = countFor(item.id);
+      html += `<button class="nav-item ${currentSection===item.id?'active':''}" data-section="${item.id}">
+        ${ICONS[item.icon]}<span class="label">${item.label}</span>
+        ${count!==null ? `<span class="count">${count}</span>` : ''}
+      </button>`;
+    }
+  }
+  nav.innerHTML = html;
+  nav.querySelectorAll('.nav-item').forEach(btn=>{
+    btn.addEventListener('click', ()=>navigate(btn.dataset.section));
+  });
+}
+function countFor(sectionId){
+  const map = {
+    products:'products', categories:'categories', brands:'brands', units:'units',
+    warehouses:'warehouses', purchases:'purchases', sales:'sales', clients:'clients',
+    providers:'providers', employees:'employees'
+  };
+  const key = map[sectionId];
+  if(!key) return null;
+  return DB[key].length;
+}
+
+function navigate(section){
+  currentSection = section;
+  render();
+  window.scrollTo(0,0);
+}
+
+function render(){
+  renderSidebar();
+  const renderer = SECTION_RENDERERS[currentSection];
+  if(renderer) renderer();
+}
+
+/* ---------- Generic modal ---------- */
+function openModal({title, bodyHtml, wide, onMount, onSubmit, submitLabel}){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal ${wide?'wide':''}">
+      <div class="modal-head">
+        <h3>${title}</h3>
+        <button class="icon-btn" id="modalClose">${ICONS.close}</button>
+      </div>
+      <form id="modalForm">
+        <div class="modal-body">${bodyHtml}</div>
+        <div class="modal-foot">
+          <button type="button" class="btn" id="modalCancel">Annuler</button>
+          <button type="submit" class="btn btn-primary">${submitLabel||'Enregistrer'}</button>
+        </div>
+      </form>
+    </div>
+  </div>`;
+  const close = ()=>{ root.innerHTML=''; };
+  document.getElementById('modalClose').addEventListener('click', close);
+  document.getElementById('modalCancel').addEventListener('click', close);
+  document.getElementById('modalBackdrop').addEventListener('click', (e)=>{ if(e.target.id==='modalBackdrop') close(); });
+  const form = document.getElementById('modalForm');
+  if(onMount) onMount(form);
+  form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const ok = onSubmit(form);
+    if(ok!==false) close();
+  });
+  return {close, form};
+}
+
+function confirmDelete(message, onConfirm){
+  openModal({
+    title:'Confirmer la suppression',
+    submitLabel:'Supprimer',
+    bodyHtml:`<p style="font-size:13.5px;color:var(--ink-soft);line-height:1.6;">${message}</p>`,
+    onMount:(form)=>{
+      const submitBtn = form.querySelector('button[type=submit]');
+      submitBtn.classList.remove('btn-primary');
+      submitBtn.classList.add('btn-danger');
+      submitBtn.style.borderColor = 'var(--danger)';
+    },
+    onSubmit:()=>{ onConfirm(); return true; }
+  });
+}
+/* ===================== CRUD générique ===================== */
+
+const ENTITY_CONFIG = {
+  categories: {
+    title:'Catégories', singularA:'une catégorie', collection:'categories',
+    fields:[
+      {key:'code', label:'Code', required:true, width:'small'},
+      {key:'name', label:'Nom', required:true}
+    ],
+    columns:[
+      {key:'code', label:'Code', cls:'mono'},
+      {key:'name', label:'Nom'},
+      {key:'_products', label:'Produits', render:(r)=> DB.products.filter(p=>p.categoryId===r.id).length}
+    ],
+    canDelete:(r)=> !DB.products.some(p=>p.categoryId===r.id)
+  },
+  brands: {
+    title:'Marques', singularA:'une marque', collection:'brands',
+    fields:[
+      {key:'name', label:'Nom', required:true},
+      {key:'description', label:'Description', type:'textarea'}
+    ],
+    columns:[
+      {key:'name', label:'Nom'},
+      {key:'description', label:'Description'},
+      {key:'_products', label:'Produits', render:(r)=> DB.products.filter(p=>p.brandId===r.id).length}
+    ],
+    canDelete:(r)=> !DB.products.some(p=>p.brandId===r.id)
+  },
+  units: {
+    title:'Unités', singularA:'une unité', collection:'units',
+    fields:[
+      {key:'name', label:'Nom', required:true},
+      {key:'shortName', label:'Abréviation', required:true, width:'small'}
+    ],
+    columns:[
+      {key:'name', label:'Nom'},
+      {key:'shortName', label:'Abréviation', cls:'mono'}
+    ],
+    canDelete:(r)=> !DB.products.some(p=>p.unitId===r.id)
+  },
+  warehouses: {
+    title:'Entrepôts', singularA:'un entrepôt', collection:'warehouses',
+    fields:[
+      {key:'name', label:'Nom', required:true},
+      {key:'city', label:'Ville'},
+      {key:'phone', label:'Téléphone'},
+      {key:'email', label:'Email'},
+      {key:'country', label:'Pays'}
+    ],
+    columns:[
+      {key:'name', label:'Nom'},
+      {key:'city', label:'Ville'},
+      {key:'phone', label:'Téléphone', cls:'mono'},
+      {key:'country', label:'Pays'},
+      {key:'_stockval', label:'Valeur du stock', render:(r)=> fmtMoney(DB.products.reduce((sum,p)=>sum+stockFor(p.id,r.id)*p.cost,0))}
+    ],
+    canDelete:(r)=> !DB.purchases.some(x=>x.warehouseId===r.id) && !DB.sales.some(x=>x.warehouseId===r.id)
+  },
+  clients: {
+    title:'Clients', singularA:'un client', collection:'clients',
+    fields:[
+      {key:'name', label:'Nom', required:true},
+      {key:'phone', label:'Téléphone'},
+      {key:'email', label:'Email'},
+      {key:'address', label:'Adresse'},
+      {key:'city', label:'Ville'},
+      {key:'country', label:'Pays'}
+    ],
+    columns:[
+      {key:'name', label:'Nom'},
+      {key:'phone', label:'Téléphone', cls:'mono'},
+      {key:'city', label:'Ville'},
+      {key:'_ca', label:'Total achats', render:(r)=> fmtMoney(DB.sales.filter(s=>s.clientId===r.id).reduce((sum,s)=>sum+s.grandTotal,0))}
+    ],
+    canDelete:(r)=> !DB.sales.some(x=>x.clientId===r.id)
+  },
+  providers: {
+    title:'Fournisseurs', singularA:'un fournisseur', collection:'providers',
+    fields:[
+      {key:'name', label:'Nom', required:true},
+      {key:'phone', label:'Téléphone'},
+      {key:'email', label:'Email'},
+      {key:'address', label:'Adresse'},
+      {key:'city', label:'Ville'},
+      {key:'country', label:'Pays'}
+    ],
+    columns:[
+      {key:'name', label:'Nom'},
+      {key:'phone', label:'Téléphone', cls:'mono'},
+      {key:'city', label:'Ville'},
+      {key:'_total', label:'Total fourni', render:(r)=> fmtMoney(DB.purchases.filter(p=>p.providerId===r.id).reduce((sum,p)=>sum+p.grandTotal,0))}
+    ],
+    canDelete:(r)=> !DB.purchases.some(x=>x.providerId===r.id)
+  },
+  employees: {
+    title:'Employés', singularA:'un employé', collection:'employees',
+    fields:[
+      {key:'firstname', label:'Prénom', required:true},
+      {key:'lastname', label:'Nom', required:true},
+      {key:'department', label:'Département'},
+      {key:'designation', label:'Poste'},
+      {key:'phone', label:'Téléphone'},
+      {key:'email', label:'Email'},
+      {key:'salary', label:'Salaire de base (FCFA)', type:'number'}
+    ],
+    columns:[
+      {key:'_name', label:'Nom', render:(r)=> `${r.firstname} ${r.lastname}`},
+      {key:'designation', label:'Poste'},
+      {key:'department', label:'Département'},
+      {key:'phone', label:'Téléphone', cls:'mono'},
+      {key:'salary', label:'Salaire', cls:'num', render:(r)=> r.salary? fmtMoney(r.salary):'—'}
+    ],
+    canDelete:()=>true
+  }
+};
+
+let crudSearch = {};
+
+function renderGenericSection(entityKey){
+  const cfg = ENTITY_CONFIG[entityKey];
+  document.getElementById('topbarTitle').innerHTML = `${ICONS[entityKey]||''} ${cfg.title}`;
+  document.getElementById('topbarSub').textContent = `${DB[cfg.collection].length} enregistrement(s)`;
+  document.getElementById('topbarActions').innerHTML = `
+    <button class="btn btn-primary" id="btnAdd">${ICONS.plus} Ajouter ${cfg.singularA}</button>`;
+  document.getElementById('topbarActions').querySelector('#btnAdd').addEventListener('click', ()=>openEntityForm(entityKey));
+
+  const search = (crudSearch[entityKey]||'').toLowerCase();
+  let rows = DB[cfg.collection];
+  if(search){
+    rows = rows.filter(r=> JSON.stringify(r).toLowerCase().includes(search));
+  }
+  rows = rows.slice().sort((a,b)=> (a.name||a.firstname||'').localeCompare(b.name||b.firstname||''));
+
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="panel">
+      <div class="table-toolbar">
+        <div class="search-input" style="display:flex;align-items:center;gap:7px;">
+          ${ICONS.search}
+          <input type="text" id="crudSearchInput" placeholder="Rechercher…" style="border:none;background:transparent;flex:1;padding:0;" value="${esc(crudSearch[entityKey]||'')}">
+        </div>
+      </div>
+      <div class="table-wrap">
+        ${rows.length ? renderEntityTable(cfg, rows, entityKey) : `<div class="empty-state"><div class="big">Aucun enregistrement</div>Ajoutez ${cfg.singularA} pour commencer.</div>`}
+      </div>
+    </div>
+  `;
+  const searchInput = document.getElementById('crudSearchInput');
+  searchInput.addEventListener('input', ()=>{
+    crudSearch[entityKey] = searchInput.value;
+    renderGenericSection(entityKey);
+    document.getElementById('crudSearchInput').focus();
+    const val = document.getElementById('crudSearchInput').value;
+    document.getElementById('crudSearchInput').setSelectionRange(val.length,val.length);
+  });
+  content.querySelectorAll('[data-edit]').forEach(btn=>{
+    btn.addEventListener('click', ()=> openEntityForm(entityKey, Number(btn.dataset.edit)));
+  });
+  content.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.addEventListener('click', ()=> deleteEntity(entityKey, Number(btn.dataset.del)));
+  });
+}
+
+function renderEntityTable(cfg, rows, entityKey){
+  let html = `<table class="data"><thead><tr>`;
+  for(const col of cfg.columns) html += `<th>${col.label}</th>`;
+  html += `<th></th></tr></thead><tbody>`;
+  for(const r of rows){
+    html += `<tr>`;
+    for(const col of cfg.columns){
+      const val = col.render ? col.render(r) : esc(r[col.key]||'—');
+      html += `<td class="${col.cls||''}">${val}</td>`;
+    }
+    html += `<td class="row-actions">
+      <button class="icon-btn" data-edit="${r.id}" title="Modifier">${ICONS.edit}</button>
+      <button class="icon-btn" data-del="${r.id}" title="Supprimer">${ICONS.trash}</button>
+    </td></tr>`;
+  }
+  html += `</tbody></table>`;
+  return html;
+}
+
+function openEntityForm(entityKey, id){
+  const cfg = ENTITY_CONFIG[entityKey];
+  const existing = id ? findById(DB[cfg.collection], id) : null;
+  let bodyHtml = '';
+  for(const f of cfg.fields){
+    const val = existing ? (existing[f.key]!==undefined && existing[f.key]!==null ? existing[f.key] : '') : '';
+    if(f.type==='textarea'){
+      bodyHtml += `<div class="field"><label>${f.label}${f.required?' <span class="req">*</span>':''}</label>
+        <textarea name="${f.key}" ${f.required?'required':''}>${esc(val)}</textarea></div>`;
+    } else if(f.type==='number'){
+      bodyHtml += `<div class="field"><label>${f.label}${f.required?' <span class="req">*</span>':''}</label>
+        <input type="number" step="any" name="${f.key}" value="${esc(val)}" ${f.required?'required':''}></div>`;
+    } else {
+      bodyHtml += `<div class="field"><label>${f.label}${f.required?' <span class="req">*</span>':''}</label>
+        <input type="text" name="${f.key}" value="${esc(val)}" ${f.required?'required':''}></div>`;
+    }
+  }
+  openModal({
+    title: existing ? `Modifier ${cfg.singularA}` : `Ajouter ${cfg.singularA}`,
+    bodyHtml,
+    onSubmit:(form)=>{
+      const data = {};
+      for(const f of cfg.fields){
+        const raw = form.elements[f.key].value;
+        data[f.key] = f.type==='number' ? (raw===''?0:Number(raw)) : raw.trim();
+      }
+      if(existing){
+        Object.assign(existing, data);
+        toast('Modifications enregistrées');
+      } else {
+        data.id = uid(DB[cfg.collection]);
+        DB[cfg.collection].push(data);
+        toast('Ajouté avec succès');
+      }
+      scheduleSave();
+      render();
+    }
+  });
+}
+
+function deleteEntity(entityKey, id){
+  const cfg = ENTITY_CONFIG[entityKey];
+  const row = findById(DB[cfg.collection], id);
+  if(!row) return;
+  if(cfg.canDelete && !cfg.canDelete(row)){
+    toast('Impossible de supprimer : cet élément est utilisé ailleurs');
+    return;
+  }
+  const label = row.name || `${row.firstname||''} ${row.lastname||''}`.trim();
+  confirmDelete(`Voulez-vous vraiment supprimer <strong>${esc(label)}</strong> ? Cette action est irréversible.`, ()=>{
+    DB[cfg.collection] = DB[cfg.collection].filter(r=>r.id!==id);
+    scheduleSave();
+    toast('Supprimé');
+    render();
+  });
+}
+/* ===================== Produits ===================== */
+
+let productSearch = '';
+let productCategoryFilter = '';
+let productStockFilter = '';
+
+function renderProducts(){
+  document.getElementById('topbarTitle').innerHTML = `${ICONS.products} Produits`;
+  document.getElementById('topbarSub').textContent = `${DB.products.length} référence(s) au catalogue`;
+  document.getElementById('topbarActions').innerHTML = `
+    <button class="btn btn-primary" id="btnAddProduct">${ICONS.plus} Ajouter un produit</button>`;
+  document.getElementById('topbarActions').querySelector('#btnAddProduct').addEventListener('click', ()=>openProductForm());
+
+  let rows = DB.products.slice();
+  if(productSearch){
+    const s = productSearch.toLowerCase();
+    rows = rows.filter(p=> p.name.toLowerCase().includes(s) || p.code.toLowerCase().includes(s));
+  }
+  if(productCategoryFilter){
+    rows = rows.filter(p=> p.categoryId === Number(productCategoryFilter));
+  }
+  if(productStockFilter==='low'){
+    rows = rows.filter(p=> p.stockAlert>0 && stockFor(p.id) <= p.stockAlert);
+  } else if(productStockFilter==='out'){
+    rows = rows.filter(p=> stockFor(p.id) <= 0);
+  }
+  rows.sort((a,b)=>a.name.localeCompare(b.name));
+
+  const catOptions = DB.categories.slice().sort((a,b)=>a.name.localeCompare(b.name))
+    .map(c=>`<option value="${c.id}" ${productCategoryFilter==String(c.id)?'selected':''}>${esc(c.name)}</option>`).join('');
+
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="panel">
+      <div class="table-toolbar">
+        <div class="search-input" style="display:flex;align-items:center;gap:7px;">
+          ${ICONS.search}
+          <input type="text" id="productSearchInput" placeholder="Nom ou code produit…" style="border:none;background:transparent;flex:1;padding:0;" value="${esc(productSearch)}">
+        </div>
+        <select id="productCategoryFilter" style="padding:8px 10px;border:1px solid var(--border);border-radius:3px;background:var(--panel-2);">
+          <option value="">Toutes catégories</option>
+          ${catOptions}
+        </select>
+        <select id="productStockFilter" style="padding:8px 10px;border:1px solid var(--border);border-radius:3px;background:var(--panel-2);">
+          <option value="">Tous les stocks</option>
+          <option value="low" ${productStockFilter==='low'?'selected':''}>Stock bas</option>
+          <option value="out" ${productStockFilter==='out'?'selected':''}>Rupture</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        ${rows.length ? renderProductsTable(rows) : `<div class="empty-state"><div class="big">Aucun produit trouvé</div>Ajustez vos filtres ou ajoutez un nouveau produit.</div>`}
+      </div>
+    </div>
+  `;
+  document.getElementById('productSearchInput').addEventListener('input', (e)=>{ productSearch=e.target.value; renderProducts(); document.getElementById('productSearchInput').focus(); const v=document.getElementById('productSearchInput').value; document.getElementById('productSearchInput').setSelectionRange(v.length,v.length); });
+  document.getElementById('productCategoryFilter').addEventListener('change', (e)=>{ productCategoryFilter=e.target.value; renderProducts(); });
+  document.getElementById('productStockFilter').addEventListener('change', (e)=>{ productStockFilter=e.target.value; renderProducts(); });
+  content.querySelectorAll('[data-edit]').forEach(btn=> btn.addEventListener('click', ()=>openProductForm(Number(btn.dataset.edit))));
+  content.querySelectorAll('[data-del]').forEach(btn=> btn.addEventListener('click', ()=>deleteProduct(Number(btn.dataset.del))));
+}
+
+function renderProductsTable(rows){
+  let html = `<table class="data"><thead><tr>
+    <th>Code</th><th>Produit</th><th>Catégorie</th><th>Marque</th>
+    <th class="num">Coût</th><th class="num">Prix</th><th>Stock</th><th></th>
+  </tr></thead><tbody>`;
+  for(const p of rows){
+    const stock = stockFor(p.id);
+    html += `<tr>
+      <td class="mono">${esc(p.code)}</td>
+      <td>${esc(p.name)}${!p.active?' <span class="tag neutral">Inactif</span>':''}</td>
+      <td>${esc(nameOf(DB.categories, p.categoryId))}</td>
+      <td>${esc(nameOf(DB.brands, p.brandId) || '—')}</td>
+      <td class="num">${fmtMoney(p.cost)}</td>
+      <td class="num">${fmtMoney(p.price)}</td>
+      <td>${gaugeHtml(stock, p.stockAlert)}</td>
+      <td class="row-actions">
+        <button class="icon-btn" data-edit="${p.id}" title="Modifier">${ICONS.edit}</button>
+        <button class="icon-btn" data-del="${p.id}" title="Supprimer">${ICONS.trash}</button>
+      </td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+  return html;
+}
+
+function optionsFor(collection, selectedId, placeholder){
+  let html = placeholder ? `<option value="">${placeholder}</option>` : '';
+  const sorted = collection.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  for(const r of sorted){
+    html += `<option value="${r.id}" ${Number(selectedId)===r.id?'selected':''}>${esc(r.name)}</option>`;
+  }
+  return html;
+}
+
+function openProductForm(id){
+  const existing = id ? findById(DB.products, id) : null;
+  const v = existing || {name:'',code:'',categoryId:'',brandId:'',unitId:'',cost:0,price:0,stockAlert:0,active:true,note:''};
+
+  const bodyHtml = `
+    <div class="field-row">
+      <div class="field"><label>Nom du produit <span class="req">*</span></label>
+        <input type="text" name="name" value="${esc(v.name)}" required></div>
+      <div class="field"><label>Code / référence <span class="req">*</span></label>
+        <input type="text" name="code" value="${esc(v.code)}" required></div>
+    </div>
+    <div class="field-row three">
+      <div class="field"><label>Catégorie <span class="req">*</span></label>
+        <select name="categoryId" required><option value="">Choisir…</option>${optionsFor(DB.categories, v.categoryId)}</select></div>
+      <div class="field"><label>Marque</label>
+        <select name="brandId">${optionsFor(DB.brands, v.brandId, '—')}</select></div>
+      <div class="field"><label>Unité</label>
+        <select name="unitId">${optionsFor(DB.units, v.unitId, '—')}</select></div>
+    </div>
+    <div class="field-row three">
+      <div class="field"><label>Coût d'achat (FCFA)</label>
+        <input type="number" step="any" name="cost" value="${v.cost}"></div>
+      <div class="field"><label>Prix de vente (FCFA)</label>
+        <input type="number" step="any" name="price" value="${v.price}"></div>
+      <div class="field"><label>Seuil d'alerte stock</label>
+        <input type="number" step="any" name="stockAlert" value="${v.stockAlert}"></div>
+    </div>
+    <div class="field"><label>Note</label><textarea name="note">${esc(v.note)}</textarea></div>
+    <div class="field checkbox-field">
+      <input type="checkbox" name="active" id="prodActive" ${v.active?'checked':''}>
+      <label for="prodActive" style="margin:0;text-transform:none;font-size:13px;">Produit actif (visible à la vente)</label>
+    </div>
+    ${existing ? `<div class="section-note">Stock actuel (tous entrepôts) : <strong>${fmtNum(stockFor(existing.id))} ${esc(nameOf(DB.units, v.unitId,'shortName')||'')}</strong></div>` : ''}
+  `;
+
+  openModal({
+    title: existing ? 'Modifier le produit' : 'Ajouter un produit',
+    wide:true,
+    bodyHtml,
+    onSubmit:(form)=>{
+      const data = {
+        name: form.elements.name.value.trim(),
+        code: form.elements.code.value.trim(),
+        categoryId: Number(form.elements.categoryId.value),
+        brandId: form.elements.brandId.value ? Number(form.elements.brandId.value) : null,
+        unitId: form.elements.unitId.value ? Number(form.elements.unitId.value) : null,
+        cost: Number(form.elements.cost.value)||0,
+        price: Number(form.elements.price.value)||0,
+        stockAlert: Number(form.elements.stockAlert.value)||0,
+        note: form.elements.note.value.trim(),
+        active: form.elements.active.checked
+      };
+      if(existing){
+        Object.assign(existing, data);
+        toast('Produit modifié');
+      } else {
+        data.id = uid(DB.products);
+        DB.products.push(data);
+        toast('Produit ajouté');
+      }
+      scheduleSave();
+      render();
+    }
+  });
+}
+
+function deleteProduct(id){
+  const usedInPurchase = DB.purchases.some(p=>p.items.some(it=>it.productId===id));
+  const usedInSale = DB.sales.some(s=>s.items.some(it=>it.productId===id));
+  if(usedInPurchase || usedInSale){
+    toast('Impossible de supprimer : ce produit apparaît dans des achats ou ventes');
+    return;
+  }
+  const p = findById(DB.products, id);
+  confirmDelete(`Voulez-vous vraiment supprimer <strong>${esc(p.name)}</strong> ?`, ()=>{
+    DB.products = DB.products.filter(r=>r.id!==id);
+    scheduleSave();
+    toast('Produit supprimé');
+    render();
+  });
+}
+/* ===================== Achats & Ventes ===================== */
+
+const TX_CONFIG = {
+  purchases: {
+    title:'Achats', collection:'purchases', partyKey:'providerId', partyCollection:'providers',
+    partyLabel:'Fournisseur', priceField:'cost', priceLabel:"Coût d'achat", refPrefix:'PR',
+    statuses:[
+      {v:'received', l:'Réceptionné', tone:'ok'},
+      {v:'pending', l:'En attente', tone:'warn'},
+      {v:'ordered', l:'Commandé', tone:'info'}
+    ]
+  },
+  sales: {
+    title:'Ventes', collection:'sales', partyKey:'clientId', partyCollection:'clients',
+    partyLabel:'Client', priceField:'price', priceLabel:'Prix de vente', refPrefix:'SL',
+    statuses:[
+      {v:'completed', l:'Terminée', tone:'ok'},
+      {v:'pending', l:'En attente', tone:'warn'},
+      {v:'ordered', l:'Commandée', tone:'info'}
+    ]
+  }
+};
+const PAYMENT_STATUSES = [
+  {v:'paid', l:'Payé', tone:'ok'},
+  {v:'partial', l:'Partiel', tone:'warn'},
+  {v:'unpaid', l:'Impayé', tone:'danger'}
+];
+
+let txSearch = {purchases:'', sales:''};
+let txStatusFilter = {purchases:'', sales:''};
+
+function statusTag(list, value){
+  const s = list.find(x=>x.v===value) || {l:value||'—', tone:'neutral'};
+  return `<span class="tag ${s.tone}">${esc(s.l)}</span>`;
+}
+
+function renderTransactionSection(typeKey){
+  const cfg = TX_CONFIG[typeKey];
+  document.getElementById('topbarTitle').innerHTML = `${ICONS[typeKey]} ${cfg.title}`;
+  const total = DB[cfg.collection].reduce((s,r)=>s+r.grandTotal,0);
+  document.getElementById('topbarSub').textContent = `${DB[cfg.collection].length} enregistrement(s) · ${fmtMoney(total)} au total`;
+  document.getElementById('topbarActions').innerHTML = `
+    <button class="btn btn-primary" id="btnAddTx">${ICONS.plus} ${typeKey==='purchases'?'Nouvel achat':'Nouvelle vente'}</button>`;
+  document.getElementById('topbarActions').querySelector('#btnAddTx').addEventListener('click', ()=>openTxForm(typeKey));
+
+  let rows = DB[cfg.collection].slice();
+  const search = (txSearch[typeKey]||'').toLowerCase();
+  if(search){
+    rows = rows.filter(r=> r.ref.toLowerCase().includes(search) || nameOf(DB[cfg.partyCollection], r[cfg.partyKey]).toLowerCase().includes(search));
+  }
+  if(txStatusFilter[typeKey]){
+    rows = rows.filter(r=> r.status === txStatusFilter[typeKey]);
+  }
+  rows.sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.id-a.id);
+
+  const statusOptions = cfg.statuses.map(s=>`<option value="${s.v}" ${txStatusFilter[typeKey]===s.v?'selected':''}>${s.l}</option>`).join('');
+
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="panel">
+      <div class="table-toolbar">
+        <div class="search-input" style="display:flex;align-items:center;gap:7px;">
+          ${ICONS.search}
+          <input type="text" id="txSearchInput" placeholder="Référence ou ${cfg.partyLabel.toLowerCase()}…" style="border:none;background:transparent;flex:1;padding:0;" value="${esc(txSearch[typeKey])}">
+        </div>
+        <select id="txStatusFilter" style="padding:8px 10px;border:1px solid var(--border);border-radius:3px;background:var(--panel-2);">
+          <option value="">Tous les statuts</option>
+          ${statusOptions}
+        </select>
+      </div>
+      <div class="table-wrap">
+        ${rows.length ? renderTxTable(cfg, rows, typeKey) : `<div class="empty-state"><div class="big">Aucune opération</div>Créez votre première entrée.</div>`}
+      </div>
+    </div>
+  `;
+  document.getElementById('txSearchInput').addEventListener('input', (e)=>{ txSearch[typeKey]=e.target.value; renderTransactionSection(typeKey); document.getElementById('txSearchInput').focus(); const v=document.getElementById('txSearchInput').value; document.getElementById('txSearchInput').setSelectionRange(v.length,v.length); });
+  document.getElementById('txStatusFilter').addEventListener('change', (e)=>{ txStatusFilter[typeKey]=e.target.value; renderTransactionSection(typeKey); });
+  content.querySelectorAll('[data-view]').forEach(btn=> btn.addEventListener('click', ()=>openTxForm(typeKey, Number(btn.dataset.view))));
+  content.querySelectorAll('[data-del]').forEach(btn=> btn.addEventListener('click', ()=>deleteTx(typeKey, Number(btn.dataset.del))));
+}
+
+function renderTxTable(cfg, rows, typeKey){
+  let html = `<table class="data"><thead><tr>
+    <th>Réf.</th><th>Date</th><th>${cfg.partyLabel}</th><th>Entrepôt</th>
+    <th class="num">Total</th><th>Statut</th><th>Paiement</th><th></th>
+  </tr></thead><tbody>`;
+  for(const r of rows){
+    html += `<tr>
+      <td class="mono detail-link" data-view="${r.id}">${esc(r.ref)}</td>
+      <td>${fmtDate(r.date)}</td>
+      <td>${esc(nameOf(DB[cfg.partyCollection], r[cfg.partyKey]))}</td>
+      <td>${esc(nameOf(DB.warehouses, r.warehouseId))}</td>
+      <td class="num">${fmtMoney(r.grandTotal)}</td>
+      <td>${statusTag(cfg.statuses, r.status)}</td>
+      <td>${statusTag(PAYMENT_STATUSES, r.paymentStatus)}</td>
+      <td class="row-actions">
+        <button class="icon-btn" data-view="${r.id}" title="Voir / modifier">${ICONS.eye}</button>
+        <button class="icon-btn" data-del="${r.id}" title="Supprimer">${ICONS.trash}</button>
+      </td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+  return html;
+}
+
+function renderLineItemsEditor(items, priceField){
+  let html = '';
+  items.forEach((it, idx)=>{
+    html += renderLineItemRow(it, idx, priceField);
+  });
+  return html;
+}
+function renderLineItemRow(it, idx, priceField){
+  const total = (it.quantity||0) * (it[priceField]||0);
+  return `<tr data-row="${idx}">
+    <td style="min-width:200px;">
+      <select data-role="product" data-idx="${idx}">
+        <option value="">Choisir un produit…</option>
+        ${optionsFor(DB.products, it.productId)}
+      </select>
+    </td>
+    <td style="width:90px;"><input type="number" step="any" min="0" data-role="qty" data-idx="${idx}" value="${it.quantity||0}"></td>
+    <td style="width:120px;"><input type="number" step="any" min="0" data-role="price" data-idx="${idx}" value="${it[priceField]||0}"></td>
+    <td class="total-cell" data-role="total" data-idx="${idx}">${fmtMoney(total)}</td>
+    <td style="width:34px;"><button type="button" class="icon-btn" data-role="removeLine" data-idx="${idx}">${ICONS.trash}</button></td>
+  </tr>`;
+}
+
+function openTxForm(typeKey, id){
+  const cfg = TX_CONFIG[typeKey];
+  const existing = id ? findById(DB[cfg.collection], id) : null;
+  const v = existing ? JSON.parse(JSON.stringify(existing)) : {
+    ref: `${cfg.refPrefix}_${Date.now().toString().slice(-6)}`,
+    date: new Date().toISOString().slice(0,10),
+    [cfg.partyKey]: '',
+    warehouseId: DB.warehouses[0] ? DB.warehouses[0].id : '',
+    status: cfg.statuses[0].v,
+    paymentStatus: 'unpaid',
+    paidAmount: 0,
+    notes: '',
+    items: [{productId:'', quantity:1, [cfg.priceField]:0}]
+  };
+
+  const statusOpts = cfg.statuses.map(s=>`<option value="${s.v}" ${v.status===s.v?'selected':''}>${s.l}</option>`).join('');
+  const paymentOpts = PAYMENT_STATUSES.map(s=>`<option value="${s.v}" ${v.paymentStatus===s.v?'selected':''}>${s.l}</option>`).join('');
+
+  const bodyHtml = `
+    <div class="field-row three">
+      <div class="field"><label>Référence <span class="req">*</span></label>
+        <input type="text" name="ref" value="${esc(v.ref)}" required></div>
+      <div class="field"><label>Date <span class="req">*</span></label>
+        <input type="date" name="date" value="${esc(v.date)}" required></div>
+      <div class="field"><label>Entrepôt <span class="req">*</span></label>
+        <select name="warehouseId" required>${optionsFor(DB.warehouses, v.warehouseId)}</select></div>
+    </div>
+    <div class="field-row three">
+      <div class="field"><label>${cfg.partyLabel} <span class="req">*</span></label>
+        <select name="party" required><option value="">Choisir…</option>${optionsFor(DB[cfg.partyCollection], v[cfg.partyKey])}</select></div>
+      <div class="field"><label>Statut</label><select name="status">${statusOpts}</select></div>
+      <div class="field"><label>Paiement</label><select name="paymentStatus">${paymentOpts}</select></div>
+    </div>
+
+    <div class="line-items">
+      <table id="lineItemsTable">
+        <thead><tr><th>Produit</th><th>Qté</th><th>${cfg.priceLabel}</th><th>Total</th><th></th></tr></thead>
+        <tbody id="lineItemsBody">${renderLineItemsEditor(v.items, cfg.priceField)}</tbody>
+      </table>
+      <div class="line-items-foot">
+        <button type="button" class="btn btn-sm" id="btnAddLine">${ICONS.plus} Ajouter une ligne</button>
+        <div class="grand-total">Total : <span class="mono" id="grandTotalDisplay">${fmtMoney(computeGrandTotal(v.items, cfg.priceField))}</span></div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field"><label>Montant payé (FCFA)</label>
+        <input type="number" step="any" name="paidAmount" value="${v.paidAmount||0}"></div>
+      <div class="field"><label>Notes</label>
+        <input type="text" name="notes" value="${esc(v.notes||'')}"></div>
+    </div>
+  `;
+
+  let workingItems = v.items.map(it=>({...it}));
+
+  const modalObj = openModal({
+    title: existing ? `${cfg.title.slice(0,-1)} ${v.ref}` : (typeKey==='purchases'?'Nouvel achat':'Nouvelle vente'),
+    wide:true,
+    submitLabel: existing ? 'Enregistrer les modifications' : 'Créer',
+    bodyHtml,
+    onMount:(form)=>{
+      const tbody = form.querySelector('#lineItemsBody');
+      const grandTotalEl = form.querySelector('#grandTotalDisplay');
+
+      function refreshTotals(){
+        let sum = 0;
+        workingItems.forEach((it,idx)=>{
+          const t = (Number(it.quantity)||0) * (Number(it[cfg.priceField])||0);
+          const cell = tbody.querySelector(`[data-role="total"][data-idx="${idx}"]`);
+          if(cell) cell.textContent = fmtMoney(t);
+          sum += t;
+        });
+        grandTotalEl.textContent = fmtMoney(sum);
+      }
+
+      function rerenderRows(){
+        tbody.innerHTML = workingItems.map((it,idx)=>renderLineItemRow(it, idx, cfg.priceField)).join('');
+        attachRowHandlers();
+        refreshTotals();
+      }
+
+      function attachRowHandlers(){
+        tbody.querySelectorAll('[data-role="product"]').forEach(sel=>{
+          sel.addEventListener('change', ()=>{
+            const idx = Number(sel.dataset.idx);
+            workingItems[idx].productId = sel.value ? Number(sel.value) : '';
+            const prod = findById(DB.products, workingItems[idx].productId);
+            if(prod && (!workingItems[idx][cfg.priceField] || workingItems[idx][cfg.priceField]===0)){
+              workingItems[idx][cfg.priceField] = cfg.priceField==='cost' ? prod.cost : prod.price;
+              rerenderRows();
+            }
+          });
+        });
+        tbody.querySelectorAll('[data-role="qty"]').forEach(inp=>{
+          inp.addEventListener('input', ()=>{
+            workingItems[Number(inp.dataset.idx)].quantity = Number(inp.value)||0;
+            refreshTotals();
+          });
+        });
+        tbody.querySelectorAll('[data-role="price"]').forEach(inp=>{
+          inp.addEventListener('input', ()=>{
+            workingItems[Number(inp.dataset.idx)][cfg.priceField] = Number(inp.value)||0;
+            refreshTotals();
+          });
+        });
+        tbody.querySelectorAll('[data-role="removeLine"]').forEach(btn=>{
+          btn.addEventListener('click', ()=>{
+            if(workingItems.length<=1){ toast('Une opération doit contenir au moins une ligne'); return; }
+            workingItems.splice(Number(btn.dataset.idx),1);
+            rerenderRows();
+          });
+        });
+      }
+      attachRowHandlers();
+
+      form.querySelector('#btnAddLine').addEventListener('click', ()=>{
+        workingItems.push({productId:'', quantity:1, [cfg.priceField]:0});
+        rerenderRows();
+      });
+    },
+    onSubmit:(form)=>{
+      const cleanItems = workingItems
+        .filter(it=> it.productId && Number(it.quantity)>0)
+        .map(it=>({productId:Number(it.productId), quantity:Number(it.quantity), [cfg.priceField]:Number(it[cfg.priceField])||0, total: Number(it.quantity)*(Number(it[cfg.priceField])||0)}));
+      if(cleanItems.length===0){
+        toast('Ajoutez au moins un produit avec une quantité valide');
+        return false;
+      }
+      const partyVal = form.elements.party.value;
+      if(!partyVal){ toast(`Sélectionnez ${cfg.partyLabel==='Fournisseur'?'un fournisseur':'un client'}`); return false; }
+
+      const grandTotal = cleanItems.reduce((s,it)=>s+it.total,0);
+      const data = {
+        ref: form.elements.ref.value.trim(),
+        date: form.elements.date.value,
+        [cfg.partyKey]: Number(partyVal),
+        warehouseId: Number(form.elements.warehouseId.value),
+        status: form.elements.status.value,
+        paymentStatus: form.elements.paymentStatus.value,
+        paidAmount: Number(form.elements.paidAmount.value)||0,
+        notes: form.elements.notes.value.trim(),
+        grandTotal,
+        items: cleanItems
+      };
+      if(existing){
+        Object.assign(existing, data);
+        toast('Enregistré');
+      } else {
+        data.id = uid(DB[cfg.collection]);
+        DB[cfg.collection].push(data);
+        toast('Créé avec succès');
+      }
+      scheduleSave();
+      render();
+    }
+  });
+}
+
+function computeGrandTotal(items, priceField){
+  return items.reduce((s,it)=> s + (Number(it.quantity)||0)*(Number(it[priceField])||0), 0);
+}
+
+function deleteTx(typeKey, id){
+  const cfg = TX_CONFIG[typeKey];
+  const row = findById(DB[cfg.collection], id);
+  if(!row) return;
+  confirmDelete(`Voulez-vous vraiment supprimer l'opération <strong>${esc(row.ref)}</strong> ? Le stock sera recalculé automatiquement.`, ()=>{
+    DB[cfg.collection] = DB[cfg.collection].filter(r=>r.id!==id);
+    scheduleSave();
+    toast('Supprimé');
+    render();
+  });
+}
+/* ===================== Tableau de bord ===================== */
+
+function renderDashboard(){
+  document.getElementById('topbarTitle').innerHTML = `${ICONS.dashboard} Tableau de bord`;
+  document.getElementById('topbarSub').textContent = `Vue d'ensemble du registre — ${new Date().toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})}`;
+  document.getElementById('topbarActions').innerHTML = '';
+
+  const stockValue = totalStockValue();
+  const revenue = DB.sales.reduce((s,r)=>s+r.grandTotal,0);
+  const purchasesTotal = DB.purchases.reduce((s,r)=>s+r.grandTotal,0);
+  const outstanding = DB.sales.reduce((s,r)=> s + Math.max(0, r.grandTotal - r.paidAmount), 0);
+  const lowStock = DB.products.filter(p=> p.active && p.stockAlert>0 && stockFor(p.id) <= p.stockAlert);
+  const outOfStock = DB.products.filter(p=> p.active && stockFor(p.id) <= 0);
+
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="grid kpi-grid">
+      <div class="kpi-card accent">
+        <div class="kpi-label">Valeur du stock</div>
+        <div class="kpi-value">${fmtMoney(stockValue)}</div>
+        <div class="kpi-note">${DB.products.length} références au catalogue</div>
+      </div>
+      <div class="kpi-card ok">
+        <div class="kpi-label">Chiffre d'affaires</div>
+        <div class="kpi-value">${fmtMoney(revenue)}</div>
+        <div class="kpi-note">${DB.sales.length} vente(s) enregistrée(s)</div>
+      </div>
+      <div class="kpi-card info">
+        <div class="kpi-label">Achats totaux</div>
+        <div class="kpi-value">${fmtMoney(purchasesTotal)}</div>
+        <div class="kpi-note">${DB.purchases.length} achat(s) enregistré(s)</div>
+      </div>
+      <div class="kpi-card warn">
+        <div class="kpi-label">Impayés clients</div>
+        <div class="kpi-value">${fmtMoney(outstanding)}</div>
+        <div class="kpi-note">Reste à encaisser</div>
+      </div>
+      <div class="kpi-card ${lowStock.length? 'warn':'ok'}">
+        <div class="kpi-label">Alertes de stock</div>
+        <div class="kpi-value">${lowStock.length}<span class="unit">bas</span> · ${outOfStock.length}<span class="unit">rupture</span></div>
+        <div class="kpi-note">Produits actifs à surveiller</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-head"><h3>Ventes des 12 derniers mois</h3><span class="hint">FCFA / mois</span></div>
+        ${renderMonthlyChart()}
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Produits en alerte</h3><span class="hint">${lowStock.length + outOfStock.length}</span></div>
+        ${renderLowStockList(lowStock, outOfStock)}
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top:14px;">
+      <div class="panel">
+        <div class="panel-head"><h3>Top 8 produits vendus</h3><span class="hint">par quantité</span></div>
+        ${renderTopProducts()}
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Valeur du stock par catégorie</h3><span class="hint">FCFA</span></div>
+        ${renderStockByCategory()}
+      </div>
+    </div>
+  `;
+}
+
+function monthKey(dateStr){ return (dateStr||'').slice(0,7); }
+
+function renderMonthlyChart(){
+  const now = new Date();
+  const months = [];
+  for(let i=11;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push({key: d.toISOString().slice(0,7), label: d.toLocaleDateString('fr-FR',{month:'short'})});
+  }
+  const totals = {};
+  for(const s of DB.sales){
+    const k = monthKey(s.date);
+    totals[k] = (totals[k]||0) + s.grandTotal;
+  }
+  const max = Math.max(1, ...months.map(m=>totals[m.key]||0));
+  let bars = '';
+  for(const m of months){
+    const val = totals[m.key]||0;
+    const h = Math.max(2, Math.round((val/max)*100));
+    bars += `<div class="chart-bar-col">
+      <div class="chart-bar" style="height:${h}%" title="${fmtMoney(val)}"></div>
+      <div class="chart-bar-label">${m.label}</div>
+    </div>`;
+  }
+  return `<div class="chart-bars">${bars}</div>`;
+}
+
+function renderLowStockList(lowStock, outOfStock){
+  const list = [...outOfStock.map(p=>({p,tag:'danger',label:'Rupture'})), ...lowStock.filter(p=>!outOfStock.includes(p)).map(p=>({p,tag:'warn',label:'Bas'}))].slice(0,8);
+  if(list.length===0){
+    return `<div class="empty-state" style="padding:24px 10px;">Aucune alerte — tous les stocks sont sains.</div>`;
+  }
+  let html = '';
+  for(const {p,tag,label} of list){
+    const stock = stockFor(p.id);
+    html += `<div class="hbar-row">
+      <div class="hbar-label" title="${esc(p.name)}">${esc(p.name)}</div>
+      <div style="flex:1;">${gaugeHtml(stock, p.stockAlert)}</div>
+      <span class="tag ${tag}" style="flex-shrink:0;">${label}</span>
+    </div>`;
+  }
+  return html;
+}
+
+function renderTopProducts(){
+  const qty = {};
+  for(const s of DB.sales){
+    for(const it of s.items){ qty[it.productId] = (qty[it.productId]||0) + it.quantity; }
+  }
+  const entries = Object.entries(qty).map(([pid,q])=>({p:findById(DB.products, Number(pid)), q}))
+    .filter(e=>e.p).sort((a,b)=>b.q-a.q).slice(0,8);
+  if(entries.length===0) return `<div class="empty-state" style="padding:24px 10px;">Aucune vente enregistrée.</div>`;
+  const max = Math.max(...entries.map(e=>e.q));
+  let html = '';
+  for(const e of entries){
+    const pct = Math.max(4, (e.q/max)*100);
+    html += `<div class="hbar-row">
+      <div class="hbar-label" title="${esc(e.p.name)}">${esc(e.p.name)}</div>
+      <div class="hbar-track"><div class="hbar-fill" style="width:${pct}%"></div></div>
+      <div class="hbar-value">${fmtNum(e.q)} ${esc(nameOf(DB.units, e.p.unitId,'shortName')||'')}</div>
+    </div>`;
+  }
+  return html;
+}
+
+function renderStockByCategory(){
+  const byCategory = {};
+  for(const p of DB.products){
+    const val = stockFor(p.id) * p.cost;
+    byCategory[p.categoryId] = (byCategory[p.categoryId]||0) + Math.max(0,val);
+  }
+  const entries = Object.entries(byCategory).map(([cid,val])=>({c:findById(DB.categories, Number(cid)), val}))
+    .filter(e=>e.c && e.val>0).sort((a,b)=>b.val-a.val).slice(0,8);
+  if(entries.length===0) return `<div class="empty-state" style="padding:24px 10px;">Aucun stock valorisé pour le moment.</div>`;
+  const max = Math.max(...entries.map(e=>e.val));
+  let html = '';
+  for(const e of entries){
+    const pct = Math.max(4, (e.val/max)*100);
+    html += `<div class="hbar-row">
+      <div class="hbar-label" title="${esc(e.c.name)}">${esc(e.c.name)}</div>
+      <div class="hbar-track"><div class="hbar-fill" style="width:${pct}%;background:var(--accent);"></div></div>
+      <div class="hbar-value">${fmtMoney(e.val)}</div>
+    </div>`;
+  }
+  return html;
+}
+
+const SECTION_RENDERERS = {
+  dashboard: renderDashboard,
+  products: renderProducts,
+  categories: ()=>renderGenericSection('categories'),
+  brands: ()=>renderGenericSection('brands'),
+  units: ()=>renderGenericSection('units'),
+  warehouses: ()=>renderGenericSection('warehouses'),
+  clients: ()=>renderGenericSection('clients'),
+  providers: ()=>renderGenericSection('providers'),
+  employees: ()=>renderGenericSection('employees'),
+  purchases: ()=>renderTransactionSection('purchases'),
+  sales: ()=>renderTransactionSection('sales')
+};
+
+/* ===================== Boot ===================== */
+async function boot(){
+  try{
+    await loadDB();
+    render();
+  }catch(e){
+    if(e.message==='auth-required') return; // login screen already shown
+    document.getElementById('content').innerHTML = `<div class="empty-state"><div class="big">Connexion impossible</div>Vérifiez votre connexion internet, puis rechargez la page.</div>`;
+    console.error(e);
+  }
+}
+boot();
+
+</script>
+</body>
+</html>

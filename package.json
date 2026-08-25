@@ -1,0 +1,18 @@
+{
+  "name": "stocky-online",
+  "version": "1.0.0",
+  "description": "Stocky - gestion de quincaillerie, version en ligne",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.12.0",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
